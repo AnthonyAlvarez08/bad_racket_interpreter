@@ -16,13 +16,6 @@ use std::io::{stdin, stdout};
 
 fn main() {
 
-    // let ae: Vec<String> = parsing::parse_args(&String::from("(modulo 16 3)"));
-    // println!("{}", ae.len());
-    // for i in ae {
-    //     println!("{}", i);
-    // }
-
-    // return;
 
     // read command line arguments
     // there should only be one, being the path to a racket program
@@ -93,7 +86,7 @@ mod evaluation {
     const CLOSE_EXPR : char = ')';
     const ARITHMETIC : [&str; 6] = ["*", "+", "-", "/", "modulo", "sqrt"];
     const BOOLEAN : [&str; 10] = ["=", ">", "<", "<=", ">=", "and", "or", "xor", "nand", "nor"];
-    const CONDS : [&str; 3] = ["if", "cond", "else"];
+    const CONDS : [&str; 2] = ["if", "cond"];
     const LITERAL_BOOL : [&str; 2] = ["#t", "#f"];
 
     /// Basically evaluates a whole program
@@ -168,6 +161,10 @@ mod evaluation {
                 return eval_boolean(command, args);
             }
 
+            if CONDS.contains(&command) {
+                return eval_cond(command, args);
+            }
+
 
 
             // otherwise just return this command I gues
@@ -191,7 +188,14 @@ mod evaluation {
             "+" => { temp_res = args.into_iter().reduce(|a, b|  a + b ).unwrap() }
             "*" => { temp_res = args.into_iter().reduce(|a, b|  a * b ).unwrap() }
             "/" => { temp_res = args.into_iter().reduce(|a, b|  a / b ).unwrap() }
-            "-" => { temp_res = args.into_iter().reduce(|a, b|  a - b ).unwrap() }
+            "-" => { 
+                if args.len() == 1 {
+                    temp_res = -1.0 * args[0];
+                } else {
+                    temp_res = args.into_iter().reduce(|a, b|  a - b ).unwrap();
+                }
+                
+            }
             "modulo" => {
                 if args.len() != 2 {
                     panic!("Modulo only takes two arguments");
@@ -211,24 +215,33 @@ mod evaluation {
         temp_res.to_string()
     }
 
-    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
-        
-        let args :Vec<f32> = args.iter()
-        .map(|x| { x.parse::<f32>().unwrap() })
-        .collect();
 
-        let mut temp_res : f32 = 0.0;
-
+    /// DONT USE, DEPENDS ON EVAL BOOLEAN
+    fn eval_cond(operand: &str, args: Vec<String>) -> String {
         match operand {
-            "+" => { temp_res = args.into_iter().reduce(|a, b|  a + b ).unwrap() }
-            "*" => { temp_res = args.into_iter().reduce(|a, b|  a * b ).unwrap() }
-            "/" => { temp_res = args.into_iter().reduce(|a, b|  a / b ).unwrap() }
-            "-" => { temp_res = args.into_iter().reduce(|a, b|  a - b ).unwrap() }
-            _ => {}
+            "if" => {
+                match args[0].parse::<bool>() {
+                    Ok(res) => {
+                        if res {
+                            return args[1].to_owned();
+                        } else {
+                            return args[2].to_owned();
+                        }
+                    }
+                    Err(msg) => {
+                        panic!("Conditional condition doesn't evaluate to a boolean");
+                    }
+                }
+            }
+            "cond" => {
+                panic!("Not implemented");
+            }
+            _ => { panic!("What? How did you manage to get to evaluate condition without a condition clause") }
         }
+    }
 
-
-        temp_res.to_string()
+    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
+        String::from("")
     }
 
 }
@@ -301,7 +314,6 @@ mod parsing {
         0
     }
 
-    /// NOT YET IMPLEMENTED
     /// given a string in the form of 
     /// operand arg arg arg...
     /// it will give the operands in a vector form
