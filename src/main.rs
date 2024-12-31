@@ -87,7 +87,6 @@ mod evaluation {
     const ARITHMETIC : [&str; 6] = ["*", "+", "-", "/", "modulo", "sqrt"];
     const BOOLEAN : [&str; 10] = ["=", ">", "<", "<=", ">=", "and", "or", "xor", "nand", "nor"];
     const CONDS : [&str; 2] = ["if", "cond"];
-    const LITERAL_BOOL : [&str; 2] = ["#t", "#f"];
 
     /// Basically evaluates a whole program
     /// (currently only supports arithmetic lol)
@@ -130,8 +129,12 @@ mod evaluation {
 
         // if it is just a number or a boolean then just return that
         // serves as base case
-        if expr.parse::<f64>().is_ok() || expr.parse::<bool>().is_ok() || LITERAL_BOOL.contains(&expr.as_str())  {
+        if expr.parse::<f64>().is_ok() || expr.parse::<bool>().is_ok()  {
             return expr.to_string();
+        } else if expr.trim().eq("#t") {
+            return String::from("true");
+        } else if expr.trim().eq("#f") {
+            return String::from("false");
         }
 
         // remove the outside parenthesis from the expression
