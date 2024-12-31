@@ -6,16 +6,17 @@
 * TODO: make it open a file given to it by command line arguments instead of just copy pasting the program here
 */
 
+// temporarily shut up about unused variables
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+use std::env;
+use std::path::Path;
+use std::fs::File;
+use std::io::prelude::*;
+
 fn main() {
 
-    // let prog = String::from("(* (+ (* 4 3) 5) 3)");
-    // let res = parsing::expression_order(&prog);
-
-    // for i in res {
-    //     println!("parentheses at {} {}", i[0], i[1]);
-
-    //     println!("Matching parentheses for {} is at {}", i[0], parsing::find_matching_parenthesis(&prog, i[0]))
-    // }
 
     let prog2 = "#lang racket
 
@@ -24,8 +25,42 @@ fn main() {
 (/ (* 3 5) 5)
 (+ (* 4 3) 5)
 (* (+ (* 4 3) 5) 3)";
+ // evaluation::evaluate(&String::from(prog2));s
 
-    evaluation::evaluate(&String::from(prog2));
+    // read command line arguments
+    // there should only be one, being the path to a racket program
+    // if there is none, start a repl
+    if let Some(arg1) = env::args().nth(1) {
+        println!("Bad Racket Interpreter will execute program {}\n\n", arg1);
+
+
+
+        // literally just copied the following from the Rust file IO wiki
+
+        let path = Path::new(&arg1);
+        let display = path.display();
+
+        // Open the path in read-only mode, returns `io::Result<File>`
+        let mut file = match File::open(&path) {
+            Err(why) => panic!("couldn't open {}: {}", display, why),
+            Ok(file) => file,
+        };
+
+        // Read the file contents into a string, returns `io::Result<usize>`
+        let mut s = String::new();
+        match file.read_to_string(&mut s) {
+            Err(why) => panic!("couldn't read {}: {}", display, why),
+            Ok(_) => {
+                // basically just run the whole program
+                evaluation::evaluate(&s)
+            },
+        }
+    } else {
+        // start a REPL
+        println!("> ");
+    }
+
+   
 
 
 
