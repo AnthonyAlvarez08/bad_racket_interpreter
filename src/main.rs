@@ -1,10 +1,12 @@
 
 /*
 * TODO: finish parse args function
+* https://docs.racket-lang.org/htdp-langs/index.html
+
+* TODO: make it open a file given to it by command line arguments instead of just copy pasting the program here
 */
 
 fn main() {
-    println!("Hello, world!");
 
     // let prog = String::from("(* (+ (* 4 3) 5) 3)");
     // let res = parsing::expression_order(&prog);
@@ -25,7 +27,7 @@ fn main() {
 
     evaluation::evaluate(&String::from(prog2));
 
-    
+
 
 }
 
@@ -35,9 +37,10 @@ mod evaluation {
     // global variables because I don't like having raw literals
     const OPEN_EXPR : char = '(';
     const CLOSE_EXPR : char = ')';
-    const ARITHMETIC : [&str; 4] = ["*", "+", "-", "+"];
+    const ARITHMETIC : [&str; 4] = ["*", "+", "-", "/"];
     const BOOLEAN : [&str; 10] = ["=", ">", "<", "<=", ">=", "and", "or", "xor", "nand", "nor"];
     const CONDS : [&str; 3] = ["if", "cond", "else"];
+    const LITERAL_BOOL : [&str; 2] = ["#t", "#f"];
 
     /// Basically evaluates a whole program
     /// (currently only supports arithmetic lol)
@@ -57,8 +60,8 @@ mod evaluation {
             // find where the current expression ends
             let ender = parsing::find_matching_parenthesis(&prog, cursor);
 
-            // do not include the parenthesis inside the expression lol
-            let expression_substr = &prog[cursor+1..ender];
+            // do make sure to include the parenthesis in the expression
+            let expression_substr = &prog[cursor..ender+1];
 
 
             // print the result
@@ -74,24 +77,45 @@ mod evaluation {
 
     /// calculates the result of an individual expression
     fn evaluate_expresion(expr: &String) -> String {
+
+        // trim any white space in there
+        let expr = String::from(expr.trim());
+
+        // if it is just a number or a boolean then just return that
+        // serves as base case
+        if expr.parse::<f64>().is_ok() || expr.parse::<bool>().is_ok() || LITERAL_BOOL.contains(&expr.as_str())  {
+            return expr.to_string();
+        }
+
+        // remove the outside parenthesis from the expression
+        // eg: (+ 5 3) goes to + 5 3
+        let orig = expr.to_owned();
+        let expr = String::from(&expr[1..expr.len() - 1]);
+
+        
+
         // get the index of the next space
         if let Some(dex) = expr.chars().position(|x| x == ' ') {
 
             // basically just parse the command and go to the more specific evaluation function
-
             let command = &expr[..dex];
 
+            // recursively evalute all the arguments inside of it
+            // args will not be used after this so the evaluation functions
+            // can just take ownership of them
+            let args : Vec<String> = parsing::parse_args(&orig).iter().map(|x| { evaluate_expresion(x) }).collect();
+
+            // return String::from(command);
+
             if ARITHMETIC.contains(&command) {
-                return eval_arithmetic(command, &expr);
+                return eval_arithmetic(command, args);
             }
             
             if BOOLEAN.contains(&command) {
-                return eval_boolean(command, &expr);
+                return eval_boolean(command, args);
             }
 
-            if CONDS.contains(&command) {
-                return eval_conditionals(&expr);
-            }
+
 
             // otherwise just return this command I gues
             panic!("Invalid symbol `{}`", command);
@@ -102,9 +126,9 @@ mod evaluation {
         
     }
 
-    fn eval_arithmetic(operand: &str, expr: &String) -> String {
-        let args :Vec<f32> = parsing::parse_args(expr)
-            .iter()
+
+    fn eval_arithmetic(operand: &str, args: Vec<String>) -> String {
+        let args :Vec<f32> = args.iter()
             .map(|x| { x.parse::<f32>().unwrap() })
             .collect();
 
@@ -122,18 +146,13 @@ mod evaluation {
         temp_res.to_string()
     }
 
-    fn eval_boolean(operand: &str, expr: &String) -> String {
-        let args = parsing::parse_args(expr);
+    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
+        
 
 
         String::from("")
     }
 
-    fn eval_conditionals(expr: &String) -> String {
-
-
-        String::from("")
-    }
 }
 
 mod parsing {
@@ -141,8 +160,9 @@ mod parsing {
 
 
     // global variables because I don't like having raw literals
-    static OPEN_EXPR : char = '(';
-    static CLOSE_EXPR : char = ')';
+    const OPEN_EXPR : char = '(';
+    const CLOSE_EXPR : char = ')';
+    const WHITESPACE : [&str; 4] = ["\t", "\n", " ", "\r"];
 
     /// heuristic to see in which order things are going to be evaluated in
     /// basically just the matching parenthesis algorithm
@@ -192,6 +212,7 @@ mod parsing {
             if at == OPEN_EXPR {
                 num_open += 1;
             }
+            // if only one open expression and we found a closer, than we're done
             else if at == CLOSE_EXPR && num_open == 1 {
                 return i;
             }
@@ -207,10 +228,64 @@ mod parsing {
     /// operand arg arg arg...
     /// it will give the operands in a vector form
     /// note that operands can be other expressions
-    /// EX: + (+ 1 1) (* 4 5) (/ 15 (+ 2 1))
-    /// would return {(+ 1 1), (* 4 5), (/ 15 (+ 2 1))}
+    /// EX: (+ 2 (+ 1 1) (* 4 5) (/ 15 (+ 2 1)))
+    /// would return {2, (+ 1 1), (* 4 5), (/ 15 (+ 2 1))}
     pub fn parse_args(stg: &String) -> Vec<String> {
-        Vec::new()
+        // so problem is to find each white space not inside a parenthesis
+
+        // remove the outside parenthesis from the expression
+        // eg: (+ 5 3) goes to + 5 3
+        let stg = String::from(&stg[1..stg.len() - 1]);
+        let mut res : Vec<String> = Vec::new();
+        
+        // lets me know where parentheses start and end
+        let parentheses = expression_order(&stg);
+
+
+        let mut cursor : usize = 1;
+        let mut begin_arg : usize = 2;
+
+
+        while cursor < stg.len() {
+            // scroll up to the next white space
+            while let Some(chr) = stg.chars().nth(cursor) {
+                if WHITESPACE.contains(&String::from(chr).as_str()) {
+                    break;
+                }
+                cursor += 1;
+            }
+
+
+            if cursor >= stg.len() {
+                break;
+            }
+
+            // if it is inside a pair of parenthesis, then skip
+            let mut skip = false;
+            for i in parentheses.iter() {
+                if cursor >= i[0] && cursor <= i[1] {
+                    skip = true;
+                    break;
+                }
+            }
+            if skip {
+                cursor += 1;
+                continue;
+            }
+
+            // try to push the argument to the string
+            if cursor > begin_arg {
+                res.push(String::from(  &stg[begin_arg..cursor]  ));
+                begin_arg = cursor + 1;
+            }
+            cursor += 1;
+        }
+
+        if begin_arg < cursor {
+            res.push(String::from(  &stg[begin_arg..stg.len()]  ));
+        }
+        
+        res
     }
 
 }
