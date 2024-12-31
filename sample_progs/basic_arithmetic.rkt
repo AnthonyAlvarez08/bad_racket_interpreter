@@ -1,5 +1,7 @@
 #lang racket
 
+(sqrt 16)
+(modulo 4 3)
 (+ 5 4)
 (* 7 3)
 (/ (* 3 5) 5)

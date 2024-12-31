@@ -16,6 +16,14 @@ use std::io::{stdin, stdout};
 
 fn main() {
 
+    // let ae: Vec<String> = parsing::parse_args(&String::from("(modulo 16 3)"));
+    // println!("{}", ae.len());
+    // for i in ae {
+    //     println!("{}", i);
+    // }
+
+    // return;
+
     // read command line arguments
     // there should only be one, being the path to a racket program
     // if there is none, start a repl
@@ -83,7 +91,7 @@ mod evaluation {
     // global variables because I don't like having raw literals
     const OPEN_EXPR : char = '(';
     const CLOSE_EXPR : char = ')';
-    const ARITHMETIC : [&str; 4] = ["*", "+", "-", "/"];
+    const ARITHMETIC : [&str; 6] = ["*", "+", "-", "/", "modulo", "sqrt"];
     const BOOLEAN : [&str; 10] = ["=", ">", "<", "<=", ">=", "and", "or", "xor", "nand", "nor"];
     const CONDS : [&str; 3] = ["if", "cond", "else"];
     const LITERAL_BOOL : [&str; 2] = ["#t", "#f"];
@@ -138,7 +146,6 @@ mod evaluation {
         let orig = expr.to_owned();
         let expr = String::from(&expr[1..expr.len() - 1]);
 
-        
 
         // get the index of the next space
         if let Some(dex) = expr.chars().position(|x| x == ' ') {
@@ -185,6 +192,18 @@ mod evaluation {
             "*" => { temp_res = args.into_iter().reduce(|a, b|  a * b ).unwrap() }
             "/" => { temp_res = args.into_iter().reduce(|a, b|  a / b ).unwrap() }
             "-" => { temp_res = args.into_iter().reduce(|a, b|  a - b ).unwrap() }
+            "modulo" => {
+                if args.len() != 2 {
+                    panic!("Modulo only takes two arguments");
+                }
+                temp_res = args[0] % args[1];
+            }
+            "sqrt" => {
+                if args.len() != 1 {
+                    panic!("Sqrt only takes one argument");
+                }
+                temp_res = f32::sqrt(args[0]);
+            }
             _ => {}
         }
 
@@ -194,9 +213,22 @@ mod evaluation {
 
     fn eval_boolean(operand: &str, args: Vec<String>) -> String {
         
+        let args :Vec<f32> = args.iter()
+        .map(|x| { x.parse::<f32>().unwrap() })
+        .collect();
+
+        let mut temp_res : f32 = 0.0;
+
+        match operand {
+            "+" => { temp_res = args.into_iter().reduce(|a, b|  a + b ).unwrap() }
+            "*" => { temp_res = args.into_iter().reduce(|a, b|  a * b ).unwrap() }
+            "/" => { temp_res = args.into_iter().reduce(|a, b|  a / b ).unwrap() }
+            "-" => { temp_res = args.into_iter().reduce(|a, b|  a - b ).unwrap() }
+            _ => {}
+        }
 
 
-        String::from("")
+        temp_res.to_string()
     }
 
 }
@@ -289,7 +321,7 @@ mod parsing {
 
 
         let mut cursor : usize = 1;
-        let mut begin_arg : usize = 2;
+        let mut begin_arg : usize = 0;
 
 
         while cursor < stg.len() {
@@ -319,6 +351,11 @@ mod parsing {
                 continue;
             }
 
+            // make sure it doesn't try to put the function name as an argument
+            if begin_arg == 0 {
+                begin_arg = cursor;
+            }
+
             // try to push the argument to the string
             if cursor > begin_arg {
                 res.push(String::from(  &stg[begin_arg..cursor]  ));
@@ -327,6 +364,7 @@ mod parsing {
             cursor += 1;
         }
 
+        // if the thing ends like (+ 3 4) it can sometimes miss the 4
         if begin_arg < cursor {
             res.push(String::from(  &stg[begin_arg..stg.len()]  ));
         }
