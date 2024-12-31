@@ -14,6 +14,7 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::{stdin, stdout};
 
 fn main() {
 
@@ -57,7 +58,26 @@ fn main() {
         }
     } else {
         // start a REPL
-        println!("> ");
+        println!("Initiating Bad Racket Interpreter REPL, type `quit` or `exit` to quit\n\n");
+        loop {
+            
+            // print thing on the same line
+            print!("BRI> ");
+            stdout().flush().unwrap();
+            let mut buffer = String::new();
+            
+            if stdin().read_line(&mut buffer).is_ok() {
+                let buffer = buffer.trim().to_owned();
+                if buffer.eq("exit") ||  buffer.eq("quit") {
+                    return;
+                }
+
+                evaluation::evaluate(&buffer);
+            }
+
+            
+        }
+        
     }
 
    
