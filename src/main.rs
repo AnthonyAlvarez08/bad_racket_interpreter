@@ -1,9 +1,7 @@
 
 /*
-* TODO: finish parse args function
+* TODO: Use result types to make error handling
 * https://docs.racket-lang.org/htdp-langs/index.html
-
-* TODO: make it open a file given to it by command line arguments instead of just copy pasting the program here
 */
 
 // temporarily shut up about unused variables
@@ -17,16 +15,6 @@ use std::io::prelude::*;
 use std::io::{stdin, stdout};
 
 fn main() {
-
-
-    let prog2 = "#lang racket
-
-(+ 5 4)
-(* 7 3)
-(/ (* 3 5) 5)
-(+ (* 4 3) 5)
-(* (+ (* 4 3) 5) 3)";
- // evaluation::evaluate(&String::from(prog2));s
 
     // read command line arguments
     // there should only be one, being the path to a racket program
@@ -52,6 +40,9 @@ fn main() {
         match file.read_to_string(&mut s) {
             Err(why) => panic!("couldn't read {}: {}", display, why),
             Ok(_) => {
+                if !s.starts_with("#lang racket") {
+                    panic!("This is not a racket file");
+                }
                 // basically just run the whole program
                 evaluation::evaluate(&s)
             },
