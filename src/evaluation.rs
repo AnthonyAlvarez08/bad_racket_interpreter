@@ -90,7 +90,7 @@ pub mod evaluation {
             }
 
             if COMPARISON.contains(&command) {
-                return eval_boolean(command, args);
+                return eval_comparison(command, args);
             }
 
             if CONDS.contains(&command) {
@@ -173,7 +173,58 @@ pub mod evaluation {
     }
 
     fn eval_comparison(operand: &str, args: Vec<String>) -> String {
-        String::from("")
+
+        let args : Vec<f32> = args.iter()
+            .map(|x| { x.parse::<f32>().unwrap() })
+            .collect();
+
+        let mut temp_res : bool = false;
+
+
+        // ["=", ">", "<", "<=", ">="]
+        // all of these have arbitrary arguments
+        // all operate on numbers only
+        match operand {
+            "=" => {
+                // check all are equal
+                temp_res = true;
+                for i in 1..args.len() {
+                    temp_res = temp_res & (args[i - 1] == args[i]); 
+                }
+            }
+
+            ">" => { 
+                temp_res = true;
+                for i in 1..args.len() {
+                    temp_res = temp_res & (args[i - 1] > args[i]); 
+                }
+            }
+
+            "<" => { 
+                temp_res = true;
+                for i in 1..args.len() {
+                    temp_res = temp_res & (args[i - 1] < args[i]); 
+                }
+            }
+
+            "<=" => { 
+                temp_res = true;
+                for i in 1..args.len() {
+                    temp_res = temp_res & (args[i - 1] <= args[i]); 
+                }
+                
+            }
+            ">=" => {
+                temp_res = true;
+                for i in 1..args.len() {
+                    temp_res = temp_res & (args[i - 1] >= args[i]); 
+                }
+            }
+            _ => {}
+        }
+
+        temp_res.to_string()
+
     }
 
     fn eval_boolean(operand: &str, args: Vec<String>) -> String {

@@ -9,7 +9,7 @@ It is written in [Rust](https://www.rust-lang.org/) because I wanted to get bett
 Things to look forward to:
 - [x] Arithmetic (+, -, /, *, mod)
 - [x] Booleans (and, or, not, xor, etc.)
-- [ ] Comparisons (=, <, >, etc.)
+- [x] Comparisons (=, <, >, etc.)
 - [ ] If statements and conditionals
 - [ ] Meaningful error messages that don't immediately crash the interpreter
 - [ ] Variables
