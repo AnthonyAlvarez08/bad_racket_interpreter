@@ -36,7 +36,14 @@ pub mod evaluation {
 
 
             // print the result
-            println!("{}", evaluate_expresion(&String::from(expression_substr)));
+            let mut res = evaluate_expresion(&String::from(expression_substr));
+            if res.trim().eq("true") {
+                res = "#t".to_owned();
+            }
+            if res.trim().eq("false") {
+                res = "#f".to_owned();
+            }
+            println!("{}", res);
             
             // go to next expression
             cursor = ender - 1;
