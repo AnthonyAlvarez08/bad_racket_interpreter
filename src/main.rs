@@ -85,7 +85,8 @@ mod evaluation {
     const OPEN_EXPR : char = '(';
     const CLOSE_EXPR : char = ')';
     const ARITHMETIC : [&str; 6] = ["*", "+", "-", "/", "modulo", "sqrt"];
-    const BOOLEAN : [&str; 10] = ["=", ">", "<", "<=", ">=", "and", "or", "xor", "nand", "nor"];
+    const BOOLEAN : [&str; 6] = ["and", "or", "xor", "nand", "nor", "not"];
+    const COMPARISON : [&str; 5] = ["=", ">", "<", "<=", ">="];
     const CONDS : [&str; 2] = ["if", "cond"];
 
     /// Basically evaluates a whole program
@@ -164,6 +165,10 @@ mod evaluation {
                 return eval_boolean(command, args);
             }
 
+            if COMPARISON.contains(&command) {
+                return eval_boolean(command, args);
+            }
+
             if CONDS.contains(&command) {
                 return eval_cond(command, args);
             }
@@ -181,7 +186,7 @@ mod evaluation {
 
 
     fn eval_arithmetic(operand: &str, args: Vec<String>) -> String {
-        let args :Vec<f32> = args.iter()
+        let args : Vec<f32> = args.iter()
             .map(|x| { x.parse::<f32>().unwrap() })
             .collect();
 
@@ -243,8 +248,55 @@ mod evaluation {
         }
     }
 
-    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
+    fn eval_comparison(operand: &str, args: Vec<String>) -> String {
         String::from("")
+    }
+
+    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
+
+        let args : Vec<bool> = args.iter()
+            .map(|x| { x.parse::<bool>().unwrap() })
+            .collect();
+
+        let mut temp_res : bool = false;
+
+        match operand {
+            "and" => {
+                // takes arbitrary number of args
+                temp_res = args.into_iter().reduce(|a, b|  a & b ).unwrap()
+            }
+            "or" => {
+                // takes arbitrary number of args
+                temp_res = args.into_iter().reduce(|a, b|  a | b ).unwrap()
+            }
+            "xor" => {
+                // only two args
+                if args.len() != 2 {
+                    panic!("XOR only takes two arguments");
+                }
+
+                temp_res = args[0] ^ args[1];
+            }
+            "nand" => {
+                // takes arbitrary number of args
+                temp_res = !args.into_iter().reduce(|a, b|  a & b ).unwrap()
+            }
+            "nor" => {
+                // takes arbitrary number of args
+                temp_res = !args.into_iter().reduce(|a, b|  a & b ).unwrap()
+            }
+            "not" => {
+                // only one arg
+                if args.len() != 1 {
+                    panic!("NOT only takes one argument");
+                }
+
+                temp_res = !args[0];
+            }
+            _ => {}
+
+        }
+        temp_res.to_string()
     }
 
 }
