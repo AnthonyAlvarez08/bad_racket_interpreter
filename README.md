@@ -11,7 +11,7 @@ Things to look forward to:
 - [x] Booleans (and, or, not, xor, etc.)
 - [ ] Comparisons (=, <, >, etc.)
 - [ ] If statements and conditionals
-- [] Meaningful error messages that don't immediately crash the interpreter
+- [ ] Meaningful error messages that don't immediately crash the interpreter
 - [ ] Variables
 - [ ] Lists
 - [ ] Functions
