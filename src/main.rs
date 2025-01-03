@@ -64,7 +64,7 @@ fn main() {
             
             if stdin().read_line(&mut buffer).is_ok() {
                 let buffer = buffer.trim().to_owned();
-                if buffer.eq("exit") ||  buffer.eq("quit") {
+                if buffer.eq("exit") ||  buffer.eq("quit") || buffer.eq("(exit)") ||  buffer.eq("(quit)") {
                     return;
                 }
 
