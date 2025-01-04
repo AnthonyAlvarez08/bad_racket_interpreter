@@ -1,8 +1,14 @@
 // Last modified by Anthony Alvarez on Jan 2, 2025
-
+/**
+ * TODO: make sure it doesn't crash if you do something stupid like (+ 1 2 3 "banana")
+ * TODO: use result types so that the interpreter doesn't crap itself if it encounters a syntax error
+*/
 
 pub mod evaluation {
     use crate::parsing::parsing;
+
+    // I dont want to type it out every time
+    type StringRes = Result<String, String>;
 
 
     // global variables because I don't like having raw literals
@@ -36,7 +42,14 @@ pub mod evaluation {
 
 
             // print the result
-            let mut res = evaluate_expresion(&String::from(expression_substr));
+            let mut res = match evaluate_expresion(&String::from(expression_substr)) {
+                Ok(stg) => stg,
+                Err(err) => { 
+                    println!("Error: {}", err);
+                    return; 
+                }
+            };
+
             if res.trim().eq("true") {
                 res = "#t".to_owned();
             }
@@ -54,7 +67,7 @@ pub mod evaluation {
     }
 
     /// calculates the result of an individual expression
-    fn evaluate_expresion(expr: &String) -> String {
+    fn evaluate_expresion(expr: &String) -> StringRes {
 
         // trim any white space in there
         let expr = String::from(expr.trim());
@@ -62,11 +75,11 @@ pub mod evaluation {
         // if it is just a number or a boolean then just return that
         // serves as base case
         if expr.parse::<f64>().is_ok() || expr.parse::<bool>().is_ok()  {
-            return expr.to_string();
+            return Ok(expr.to_string());
         } else if expr.trim().eq("#t") {
-            return String::from("true");
+            return Ok(String::from("true"));
         } else if expr.trim().eq("#f") {
-            return String::from("false");
+            return Ok(String::from("false"));
         }
 
         // remove the outside parenthesis from the expression
@@ -84,7 +97,18 @@ pub mod evaluation {
             // recursively evalute all the arguments inside of it
             // args will not be used after this so the evaluation functions
             // can just take ownership of them
-            let args : Vec<String> = parsing::parse_args(&orig).iter().map(|x| { evaluate_expresion(x) }).collect();
+            let args : Vec<String> = parsing::parse_args(&orig)
+                .iter()
+                .map(|x| { 
+                    match evaluate_expresion(x) {
+                        Ok(stg) => { return String::from(stg); },
+                        Err(err) => {
+                            // just make it not have an argument here
+                            return String::from("");
+                        }
+                    }
+                })
+                .collect();
 
             // return String::from(command);
 
@@ -107,16 +131,16 @@ pub mod evaluation {
 
 
             // otherwise just return this command I gues
-            panic!("Invalid symbol `{}`", command);
+            return Err(format!("Invalid symbol `{command}`").into()); // string interpolation?
         } else {
-            panic!("Invalid syntax");
+            return Err("Invalid syntax".into());
         }
         
         
     }
 
 
-    fn eval_arithmetic(operand: &str, args: Vec<String>) -> String {
+    fn eval_arithmetic(operand: &str, args: Vec<String>) -> StringRes {
         let args : Vec<f32> = args.iter()
             .map(|x| { x.parse::<f32>().unwrap() })
             .collect();
@@ -137,13 +161,13 @@ pub mod evaluation {
             }
             "modulo" => {
                 if args.len() != 2 {
-                    panic!("Modulo only takes two arguments");
+                    return Err("Modulo only takes two arguments".into());
                 }
                 temp_res = args[0] % args[1];
             }
             "sqrt" => {
                 if args.len() != 1 {
-                    panic!("Sqrt only takes one argument");
+                    return Err("Sqrt only takes one argument".into());
                 }
                 temp_res = f32::sqrt(args[0]);
             }
@@ -151,35 +175,35 @@ pub mod evaluation {
         }
 
 
-        temp_res.to_string()
+        Ok(temp_res.to_string())
     }
 
 
     /// DONT USE, DEPENDS ON EVAL BOOLEAN
-    fn eval_cond(operand: &str, args: Vec<String>) -> String {
+    fn eval_cond(operand: &str, args: Vec<String>) -> StringRes {
         match operand {
             "if" => {
                 match args[0].parse::<bool>() {
                     Ok(res) => {
                         if res {
-                            return args[1].to_owned();
+                            return Ok(args[1].to_owned());
                         } else {
-                            return args[2].to_owned();
+                            return Ok(args[2].to_owned());
                         }
                     }
                     Err(msg) => {
-                        panic!("Conditional condition doesn't evaluate to a boolean");
+                        return Err("Conditional condition doesn't evaluate to a boolean".into());
                     }
                 }
             }
             "cond" => {
-                panic!("Not implemented");
+                return Err("Not implemented".into());
             }
-            _ => { panic!("What? How did you manage to get to evaluate condition without a condition clause") }
+            _ => { return Err("What? How did you manage to get to evaluate condition without a condition clause".into()) }
         }
     }
 
-    fn eval_comparison(operand: &str, args: Vec<String>) -> String {
+    fn eval_comparison(operand: &str, args: Vec<String>) -> StringRes {
 
         let args : Vec<f32> = args.iter()
             .map(|x| { x.parse::<f32>().unwrap() })
@@ -230,11 +254,11 @@ pub mod evaluation {
             _ => {}
         }
 
-        temp_res.to_string()
+        Ok(temp_res.to_string())
 
     }
 
-    fn eval_boolean(operand: &str, args: Vec<String>) -> String {
+    fn eval_boolean(operand: &str, args: Vec<String>) -> StringRes {
 
         let args : Vec<bool> = args.iter()
             .map(|x| { x.parse::<bool>().unwrap() })
@@ -254,7 +278,7 @@ pub mod evaluation {
             "xor" => {
                 // only two args
                 if args.len() != 2 {
-                    panic!("XOR only takes two arguments");
+                    return Err("XOR only takes two arguments".into());
                 }
 
                 temp_res = args[0] ^ args[1];
@@ -270,7 +294,7 @@ pub mod evaluation {
             "not" => {
                 // only one arg
                 if args.len() != 1 {
-                    panic!("NOT only takes one argument");
+                    return Err("NOT only takes one argument".into());
                 }
 
                 temp_res = !args[0];
@@ -278,7 +302,7 @@ pub mod evaluation {
             _ => {}
 
         }
-        temp_res.to_string()
+        Ok(temp_res.to_string())
     }
 
 }
