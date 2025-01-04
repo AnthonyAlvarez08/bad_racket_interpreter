@@ -58,7 +58,7 @@ fn main() {
         loop {
             
             // print thing on the same line
-            print!("BRI> ");
+            print!("ARI> ");
             stdout().flush().unwrap();
             let mut buffer = String::new();
             

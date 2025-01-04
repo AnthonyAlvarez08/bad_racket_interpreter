@@ -1,7 +1,8 @@
 // Last modified by Anthony Alvarez on Jan 2, 2025
 /**
- * TODO: make sure it doesn't crash if you do something stupid like (+ 1 2 3 "banana")
- * TODO: use result types so that the interpreter doesn't crap itself if it encounters a syntax error
+ * TODO: COND statement
+ * TODO: variables
+ * TODO: symbols
 */
 
 pub mod evaluation {
@@ -21,6 +22,7 @@ pub mod evaluation {
     const BOOLEAN : [&str; 6] = ["and", "or", "xor", "nand", "nor", "not"];
     const COMPARISON : [&str; 5] = ["=", ">", "<", "<=", ">="];
     const CONDS : [&str; 2] = ["if", "cond"];
+    const WHITESPACE : [&str; 4] = ["\t", "\n", " ", "\r"];
 
     /// Basically evaluates a whole program
     /// (currently only supports arithmetic lol)
@@ -85,10 +87,36 @@ pub mod evaluation {
             return Ok(String::from("false"));
         }
 
+
+        // TODO: check if thing exists in variables table
+        // TODO: check for symbols
+
+        // make sure the expression has at least two letters if not immediately taxable
+        if expr.len() < 3 {
+            return Err("Expression format is (operand arg arg arg...)".into());
+        }
+        
+        // let orig = expr.to_owned();
+
+
+        let mut first_non_space = 1;
+
         // remove the outside parenthesis from the expression
         // eg: (+ 5 3) goes to + 5 3
-        let orig = expr.to_owned();
-        let expr = String::from(&expr[1..expr.len() - 1]);
+        // go up to the next non white space
+        while let Some(chr) = expr.chars().nth(first_non_space) {
+            if first_non_space >= expr.len() || !WHITESPACE.contains(&String::from(chr).as_str()) {
+                break;
+            }
+            first_non_space += 1;
+        }
+        
+        let expr = String::from(&expr[first_non_space..expr.len() - 1]);
+
+        // save a version with the parenthesis still
+        let mut orig = expr.to_owned(); 
+        orig.insert(0, OPEN_EXPR);
+        orig.insert(orig.len(), CLOSE_EXPR);
 
 
         // get the index of the next space
