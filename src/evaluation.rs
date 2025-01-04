@@ -5,6 +5,9 @@
 */
 
 pub mod evaluation {
+    use std::num::ParseFloatError;
+    use std::str::ParseBoolError;
+
     use crate::parsing::parsing;
 
     // I dont want to type it out every time
@@ -141,9 +144,27 @@ pub mod evaluation {
 
 
     fn eval_arithmetic(operand: &str, args: Vec<String>) -> StringRes {
-        let args : Vec<f32> = args.iter()
-            .map(|x| { x.parse::<f32>().unwrap() })
+
+        // attempt to parse everything into a float
+        let args_res : Vec<Result<f32, ParseFloatError>> = args.iter()
+            .map(|x| { 
+                x.parse::<f32>()
+            })
             .collect();
+
+        // make sure everything parsed into a float correctly
+        if !args_res.iter().all(|x| x.is_ok()) {
+            return Err("At least one arg is not a number".into());
+        }
+
+        // now convert all args to float
+        let args : Vec<f32> = args_res.into_iter().map(|x| {
+            match x {
+                Ok(num) => num,
+                Err(err) => 0.0
+            }
+        }).collect();
+
 
         let mut temp_res : f32 = 0.0;
 
@@ -205,9 +226,25 @@ pub mod evaluation {
 
     fn eval_comparison(operand: &str, args: Vec<String>) -> StringRes {
 
-        let args : Vec<f32> = args.iter()
-            .map(|x| { x.parse::<f32>().unwrap() })
+        // attempt to parse everything into a float
+        let args_res : Vec<Result<f32, ParseFloatError>> = args.iter()
+            .map(|x| { 
+                x.parse::<f32>()
+            })
             .collect();
+
+        // make sure everything parsed into a float correctly
+        if !args_res.iter().all(|x| x.is_ok()) {
+            return Err("At least one arg is not a number".into());
+        }
+
+        // now convert all args to float
+        let args : Vec<f32> = args_res.into_iter().map(|x| {
+            match x {
+                Ok(num) => num,
+                Err(err) => 0.0
+            }
+        }).collect();
 
         let mut temp_res : bool = false;
 
@@ -260,9 +297,25 @@ pub mod evaluation {
 
     fn eval_boolean(operand: &str, args: Vec<String>) -> StringRes {
 
-        let args : Vec<bool> = args.iter()
-            .map(|x| { x.parse::<bool>().unwrap() })
+        // attempt to parse everything into a float
+        let args_res : Vec<Result<bool, ParseBoolError>> = args.iter()
+            .map(|x| { 
+                x.parse::<bool>()
+            })
             .collect();
+
+        // make sure everything parsed into a float correctly
+        if !args_res.iter().all(|x| x.is_ok()) {
+            return Err("At least one arg is not a boolean".into());
+        }
+
+        // now convert all args to float
+        let args : Vec<bool> = args_res.into_iter().map(|x| {
+            match x {
+                Ok(num) => num,
+                Err(err) => false
+            }
+        }).collect();
 
         let mut temp_res : bool = false;
 
