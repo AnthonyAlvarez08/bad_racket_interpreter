@@ -6,6 +6,7 @@
 */
 
 pub mod evaluation {
+    use std::collections::HashMap;
     use std::num::ParseFloatError;
     use std::str::ParseBoolError;
 
@@ -26,7 +27,7 @@ pub mod evaluation {
 
     /// Basically evaluates a whole program
     /// (currently only supports arithmetic lol)
-    pub fn evaluate(prog: &String) {
+    pub fn evaluate(prog: &String, var_table: &mut HashMap<String, String>) {
         let end = prog.len();
         let mut cursor : usize = 0;
 
@@ -36,6 +37,20 @@ pub mod evaluation {
                 cursor += 1;
 
                 if cursor >= end {
+
+                    let trimmed = prog.trim();
+
+                    // if there is no parenthesis, check that it exists in the variable table or is empty
+                    if var_table.contains_key(trimmed) {
+                        match var_table.get(trimmed) {
+                            Some(stg) => println!("{}", stg),
+                            None => println!("What?")
+                        }
+                    } else {
+                        println!("This is neither a recognizable function or variable");
+                    }
+
+
                     return;
                 }
             }
@@ -47,7 +62,7 @@ pub mod evaluation {
 
 
             // print the result
-            let mut res = match evaluate_expresion(&String::from(expression_substr)) {
+            let mut res = match evaluate_expresion(&String::from(expression_substr), var_table) {
                 Ok(stg) => stg,
                 Err(err) => { 
                     println!("Error: {}", err);
@@ -72,7 +87,7 @@ pub mod evaluation {
     }
 
     /// calculates the result of an individual expression
-    fn evaluate_expresion(expr: &String) -> StringRes {
+    fn evaluate_expresion(expr: &String, var_table: &mut HashMap<String, String>) -> StringRes {
 
         // trim any white space in there
         let expr = String::from(expr.trim());
@@ -90,13 +105,20 @@ pub mod evaluation {
 
         // TODO: check if thing exists in variables table
         // TODO: check for symbols
+        if var_table.contains_key(expr.trim()) {
+            let res = match var_table.get(expr.trim()) {
+                Some(stg) => Ok(stg.to_owned()),
+                None => Err("How?, I checked that it contains the key".into())
+            };
+
+            return res;
+        }
 
         // make sure the expression has at least two letters if not immediately taxable
-        if expr.len() < 3 {
-            return Err("Expression format is (operand arg arg arg...)".into());
-        }
+        // if expr.len() < 3 {
+        //     return Err("Expression format is (operand arg arg arg...)".into());
+        // }
         
-        // let orig = expr.to_owned();
 
 
         let mut first_non_space = 1;
@@ -131,7 +153,7 @@ pub mod evaluation {
             let args : Vec<String> = parsing::parse_args(&orig)
                 .iter()
                 .map(|x| { 
-                    match evaluate_expresion(x) {
+                    match evaluate_expresion(x, var_table) {
                         Ok(stg) => { return String::from(stg); },
                         Err(err) => {
                             // just make it not have an argument here

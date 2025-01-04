@@ -14,7 +14,7 @@ Things to look forward to:
 - [x] Meaningful error messages that don't immediately crash the interpreter
 - [ ] Variables
 - [ ] Lists
-- [ ] Functions
+- [ ] Functions (Both lambda and defined)
 - [x] REPL
 - [x] Running External Files
 

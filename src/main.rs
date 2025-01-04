@@ -10,6 +10,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::fs::File;
@@ -20,6 +21,11 @@ mod parsing; // for some reason I need to include this here for evaluation.rs to
 
 fn main() {
 
+
+    // define a global variables and functions table
+    // TODO: actually make the functions table
+    let mut var_table : HashMap<String, String> = HashMap::new();
+    var_table.insert("a".into(), "5".into());
 
     // read command line arguments
     // there should only be one, being the path to a racket program
@@ -49,7 +55,7 @@ fn main() {
                     panic!("This is not a racket file");
                 }
                 // basically just run the whole program
-                evaluation::evaluation::evaluate(&s)
+                evaluation::evaluation::evaluate(&s, &mut var_table)
             },
         }
     } else {
@@ -68,7 +74,7 @@ fn main() {
                     return;
                 }
 
-                evaluation::evaluation::evaluate(&buffer);
+                evaluation::evaluation::evaluate(&buffer, &mut var_table);
             }
 
             
