@@ -25,7 +25,9 @@ fn main() {
     // define a global variables and functions table
     // TODO: actually make the functions table
     let mut var_table : HashMap<String, String> = HashMap::new();
-    var_table.insert("a".into(), "5".into());
+
+    // TODO: remove this when get variables fully working
+    // var_table.insert("a".into(), "5".into());
 
     // read command line arguments
     // there should only be one, being the path to a racket program

@@ -31,6 +31,7 @@ pub mod evaluation {
         let end = prog.len();
         let mut cursor : usize = 0;
 
+        // TODO: parsing is kinda jank, pls fix
         while cursor < end {
             // go up to next opening parenthesis
             while prog.chars().nth(cursor).unwrap_or_default() != OPEN_EXPR {
@@ -46,9 +47,7 @@ pub mod evaluation {
                             Some(stg) => println!("{}", stg),
                             None => println!("What?")
                         }
-                    } else {
-                        println!("This is neither a recognizable function or variable");
-                    }
+                    } 
 
 
                     return;
@@ -105,6 +104,9 @@ pub mod evaluation {
 
         // TODO: check if thing exists in variables table
         // TODO: check for symbols
+        // for (key, val) in var_table.iter() {
+        //     println!("Variable: {key} with value {val}");
+        // }
         if var_table.contains_key(expr.trim()) {
             let res = match var_table.get(expr.trim()) {
                 Some(stg) => Ok(stg.to_owned()),
@@ -147,6 +149,11 @@ pub mod evaluation {
             // basically just parse the command and go to the more specific evaluation function
             let command = &expr[..dex];
 
+            if command.eq("define") {
+                let res = eval_define(&parsing::parse_args(&orig), var_table);
+                return res;
+            }
+
             // recursively evalute all the arguments inside of it
             // args will not be used after this so the evaluation functions
             // can just take ownership of them
@@ -164,6 +171,8 @@ pub mod evaluation {
                 .collect();
 
             // return String::from(command);
+
+            
 
             if ARITHMETIC.contains(&command) {
                 return eval_arithmetic(command, args);
@@ -407,5 +416,27 @@ pub mod evaluation {
         }
         Ok(temp_res.to_string())
     }
+
+
+    fn eval_define(args: &Vec<String>, var_table: &mut HashMap<String, String>) -> StringRes {
+        // TODO: support defining functions
+
+        if args.len() == 2 {
+            let res = evaluate_expresion(&args[1].clone(), var_table);
+            match res {
+                Ok(arg) => {
+                    var_table.insert(args[0].clone().trim().into(), arg);
+                    return Ok("".into());
+                }
+                Err(err) => {
+                    return Err("Something went wrong in evaluating expression".into());
+                }
+            }
+            
+        } else {
+            Err("Defining of variable should be (define var_name expr)".into())
+        }
+    }
+
 
 }

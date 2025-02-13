@@ -12,7 +12,7 @@ Things to look forward to:
 - [x] Comparisons (=, <, >, etc.)
 - [ ] If statements and conditionals
 - [x] Meaningful error messages that don't immediately crash the interpreter
-- [ ] Variables
+- [x] Variables
 - [ ] Lists
 - [ ] Functions (Both lambda and defined)
 - [x] REPL
