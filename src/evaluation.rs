@@ -23,6 +23,7 @@ pub mod evaluation {
     const COMPARISON : [&str; 5] = ["=", ">", "<", "<=", ">="];
     const CONDS : [&str; 2] = ["if", "cond"];
     const WHITESPACE : [&str; 4] = ["\t", "\n", " ", "\r"];
+    const BOOLLITERALS : [&str; 4] = ["#t", "#f", "true", "false"];
 
     /// Basically evaluates a whole program
     /// (currently only supports arithmetic lol)
@@ -60,7 +61,7 @@ pub mod evaluation {
 
 
             // print the result
-            let mut res = match evaluate_expresion(&String::from(expression_substr), var_table) {
+            let mut res = match evaluate_expresion(&String::from(expression_substr), var_table, true) {
                 Ok(stg) => stg,
                 Err(err) => { 
                     println!("Error: {}", err);
@@ -85,7 +86,7 @@ pub mod evaluation {
     }
 
     /// calculates the result of an individual expression
-    fn evaluate_expresion(expr: &String, var_table: &mut HashMap<String, String>) -> StringRes {
+    fn evaluate_expresion(expr: &String, var_table: &mut HashMap<String, String>, first: bool) -> StringRes {
 
         // trim any white space in there
         let expr = String::from(expr.trim());
@@ -153,6 +154,12 @@ pub mod evaluation {
             let command = &expr[..dex];
 
             if command.eq("define") {
+
+                if !first {
+                    return Err("Cannot define within another expression".into());
+                }
+
+
                 let parsed_args = match parsing::parse_args(&orig) {
                     Ok(val) => val,
                     Err(error) => {
@@ -166,15 +173,18 @@ pub mod evaluation {
             // recursively evalute all the arguments inside of it
             // args will not be used after this so the evaluation functions
             // can just take ownership of them
+            let mut evalerror: Vec<String> = Vec::new();
+
             let args : Vec<String> = match parsing::parse_args(&orig) {
                 Ok(temp) => {
                     temp
                     .iter()
                     .map(|x| { 
-                        match evaluate_expresion(x, var_table) {
+                        match evaluate_expresion(x, var_table, false) {
                             Ok(stg) => { return String::from(stg); },
                             Err(err) => {
                                 // just make it not have an argument here
+                                evalerror.push(err);
                                 return String::from("");
                             }
                         }
@@ -186,6 +196,18 @@ pub mod evaluation {
                 }
 
             };
+
+            if evalerror.len() > 0 {
+                let mut stg = String::from("");
+
+                for i in evalerror {
+                    stg.push_str(&i);
+                    stg.push('\n');
+                }
+
+                return Err(stg);
+            }
+
 
             // return String::from(command);
 
@@ -282,6 +304,9 @@ pub mod evaluation {
     fn eval_cond(operand: &str, args: Vec<String>) -> StringRes {
         match operand {
             "if" => {
+                if args.len() != 3 {
+                    return Err("If statements must be in the format of (if <cond> <then_expr> <else_expr>)".into());
+                }
                 match args[0].parse::<bool>() {
                     Ok(res) => {
                         if res {
@@ -441,10 +466,27 @@ pub mod evaluation {
         // TODO: support defining functions
 
         if args.len() == 2 {
-            let res = evaluate_expresion(&args[1].clone(), var_table);
+            let res = evaluate_expresion(&args[1].clone(), var_table, false);
             match res {
                 Ok(arg) => {
-                    var_table.insert(args[0].clone().trim().into(), arg);
+                    let temp = args[0].clone().trim().to_string();
+                    let temp2 = &temp.as_str();
+
+                    // filter out invalid variable names
+                    if ARITHMETIC.contains(temp2) 
+                        || CONDS.contains(temp2) 
+                        || WHITESPACE.contains(temp2)
+                        || BOOLEAN.contains(temp2)
+                        || COMPARISON.contains(temp2)
+                        || BOOLLITERALS.contains(temp2)
+                        || temp.starts_with(&['0', '9', '8', '7', '6', '5', '4', '3', '2', '1', '[', ']', '{', '}', '#'])
+                        || temp.eq("define")
+                    {
+                        return Err("Invalid variable name".into());
+                    }
+
+
+                    var_table.insert(temp, arg);
                     return Ok("".into());
                 }
                 Err(err) => {
