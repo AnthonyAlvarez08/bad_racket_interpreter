@@ -1,8 +1,7 @@
-// Last modified by Anthony Alvarez on Jan 2, 2025
+// Last modified by Anthony Alvarez on Feb 13, 2025
 
 
 /*
-* TODO: Use result types to make error handling
 * https://docs.racket-lang.org/htdp-langs/index.html
 */
 

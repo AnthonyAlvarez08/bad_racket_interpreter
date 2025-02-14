@@ -1,9 +1,8 @@
-// Last modified by Anthony Alvarez on Jan 2, 2025
-// TODO: parsing is kinda jank, pls fix
+// Last modified by Anthony Alvarez on Feb 13, 2025
 
 
 pub mod parsing {
-    use core::panic;
+    // use core::panic;
 
 
     // global variables because I don't like having raw literals
@@ -13,7 +12,7 @@ pub mod parsing {
 
     /// heuristic to see in which order things are going to be evaluated in
     /// basically just the matching parenthesis algorithm
-    pub fn expression_order(stg: &String) -> Vec<[usize; 2]> {
+    pub fn expression_order(stg: &String) -> Result<Vec<[usize; 2]>, String> {
         
 
         let mut stack : Vec<usize> = Vec::new();
@@ -39,10 +38,11 @@ pub mod parsing {
         }
 
         if stack.len() != 0 {
-            panic!("Mismatched parentheses");
+            // panic!("Mismatched parentheses");
+            return Err("Mismatched parentheses".into());
         }
 
-        parentheses_eval_order
+        Ok(parentheses_eval_order)
 
 
     }
@@ -76,7 +76,7 @@ pub mod parsing {
     /// note that operands can be other expressions
     /// EX: (+ 2 (+ 1 1) (* 4 5) (/ 15 (+ 2 1)))
     /// would return {2, (+ 1 1), (* 4 5), (/ 15 (+ 2 1))}
-    pub fn parse_args(stg: &String) -> Vec<String> {
+    pub fn parse_args(stg: &String) -> Result<Vec<String>, String> {
         // so problem is to find each white space not inside a parenthesis
 
         // remove the outside parenthesis from the expression
@@ -85,7 +85,12 @@ pub mod parsing {
         let mut res : Vec<String> = Vec::new();
         
         // lets me know where parentheses start and end
-        let parentheses = expression_order(&stg);
+        let parentheses = match expression_order(&stg) {
+            Ok(val) => val,
+            Err(error) => {
+                return Err(error);
+            }
+        };
 
 
         let mut cursor : usize = 1;
@@ -127,6 +132,8 @@ pub mod parsing {
             // try to push the argument to the string
             if cursor > begin_arg {
                 let temp = String::from(  &stg[begin_arg..cursor]  );
+
+                // don't push just spaces tho
                 if !temp.eq("") && !temp.eq(" ") {
                     res.push(temp);
                 }
@@ -144,13 +151,8 @@ pub mod parsing {
             
         }
 
-        // println!("On current parse of {}", stg);
-        // for i in res.iter() {
-        //     println!("Item {}", i);
-        // }
-        // println!("\n\n");
         
-        res
+        Ok(res)
     }
 
 }

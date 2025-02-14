@@ -1,4 +1,4 @@
-// Last modified by Anthony Alvarez on Jan 2, 2025
+// Last modified by Anthony Alvarez on Feb 13, 2025
 /**
  * TODO: COND statement
  * TODO: symbols
@@ -100,6 +100,10 @@ pub mod evaluation {
             return Ok(String::from("false"));
         }
 
+        if parsing::expression_order(&expr).is_err() {
+            return Err("parsing error".into());
+        }
+
 
         // TODO: check if thing exists in variables table
         // TODO: check for symbols
@@ -149,29 +153,42 @@ pub mod evaluation {
             let command = &expr[..dex];
 
             if command.eq("define") {
-                let res = eval_define(&parsing::parse_args(&orig), var_table);
+                let parsed_args = match parsing::parse_args(&orig) {
+                    Ok(val) => val,
+                    Err(error) => {
+                        return Err(error.to_owned());
+                    }
+                };
+                let res = eval_define(&parsed_args, var_table);
                 return res;
             }
 
             // recursively evalute all the arguments inside of it
             // args will not be used after this so the evaluation functions
             // can just take ownership of them
-            let args : Vec<String> = parsing::parse_args(&orig)
-                .iter()
-                .map(|x| { 
-                    match evaluate_expresion(x, var_table) {
-                        Ok(stg) => { return String::from(stg); },
-                        Err(err) => {
-                            // just make it not have an argument here
-                            return String::from("");
+            let args : Vec<String> = match parsing::parse_args(&orig) {
+                Ok(temp) => {
+                    temp
+                    .iter()
+                    .map(|x| { 
+                        match evaluate_expresion(x, var_table) {
+                            Ok(stg) => { return String::from(stg); },
+                            Err(err) => {
+                                // just make it not have an argument here
+                                return String::from("");
+                            }
                         }
-                    }
-                })
-                .collect();
+                    })
+                    .collect()
+                }
+                Err(error) => {
+                    return Err(error);
+                }
+
+            };
 
             // return String::from(command);
 
-            let a = &args[0];
 
             
 
@@ -228,9 +245,10 @@ pub mod evaluation {
 
         let mut temp_res : f32 = 0.0;
 
+
         match operand {
-            "+" => { temp_res = args.into_iter().reduce(|a, b|  a + b ).unwrap() }
-            "*" => { temp_res = args.into_iter().reduce(|a, b|  a * b ).unwrap() }
+            "+" => { temp_res = args.into_iter().fold(0 as f32, |a, b|  a + b ) }
+            "*" => { temp_res = args.into_iter().fold(1 as f32,|a, b|  a * b ) }
             "/" => { temp_res = args.into_iter().reduce(|a, b|  a / b ).unwrap() }
             "-" => { 
                 if args.len() == 1 {
