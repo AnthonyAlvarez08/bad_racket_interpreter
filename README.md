@@ -4,13 +4,14 @@ This is an interpreter to run the [Racket programming language](https://racket-l
 
 It is written in [Rust](https://www.rust-lang.org/) because I wanted to get better at programming in Rust and also needed more projects to pad my Resume.
 
-
+current to do: Make the parsing more resilient
 
 Things to look forward to:
 - [x] Arithmetic (+, -, /, *, mod)
 - [x] Booleans (and, or, not, xor, etc.)
 - [x] Comparisons (=, <, >, etc.)
-- [ ] If statements and conditionals
+- [x] If statements
+- [ ] conditional statements
 - [x] Meaningful error messages that don't immediately crash the interpreter
 - [x] Variables
 - [ ] Lists

@@ -1,4 +1,6 @@
 // Last modified by Anthony Alvarez on Jan 2, 2025
+// TODO: parsing is kinda jank, pls fix
+
 
 pub mod parsing {
     use core::panic;
@@ -124,7 +126,10 @@ pub mod parsing {
 
             // try to push the argument to the string
             if cursor > begin_arg {
-                res.push(String::from(  &stg[begin_arg..cursor]  ));
+                let temp = String::from(  &stg[begin_arg..cursor]  );
+                if !temp.eq("") && !temp.eq(" ") {
+                    res.push(temp);
+                }
                 begin_arg = cursor + 1;
             }
             cursor += 1;
@@ -132,8 +137,18 @@ pub mod parsing {
 
         // if the thing ends like (+ 3 4) it can sometimes miss the 4
         if begin_arg < cursor {
-            res.push(String::from(  &stg[begin_arg..stg.len()]  ));
+            let temp = String::from(  &stg[begin_arg..stg.len()]  ).trim().to_string();
+            if !temp.eq("") && !temp.eq(" ") {
+                res.push(temp);
+            }
+            
         }
+
+        // println!("On current parse of {}", stg);
+        // for i in res.iter() {
+        //     println!("Item {}", i);
+        // }
+        // println!("\n\n");
         
         res
     }

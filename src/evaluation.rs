@@ -1,7 +1,6 @@
 // Last modified by Anthony Alvarez on Jan 2, 2025
 /**
  * TODO: COND statement
- * TODO: variables
  * TODO: symbols
 */
 
@@ -171,6 +170,8 @@ pub mod evaluation {
                 .collect();
 
             // return String::from(command);
+
+            let a = &args[0];
 
             
 
